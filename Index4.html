@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚禮 5 人氣球搶破遊戲</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    background: #fff0f5;
+    padding: 20px;
+  }
+  h1 {
+    color: #d147a3;
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  #countdown {
+    font-size: 40px;
+    color: #d147a3;
+    margin: 20px 0;
+  }
+  .balloon {
+    width: 120px;
+    height: 160px;
+    border-radius: 60% 60% 60% 60%;
+    margin: 15px;
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    box-shadow: inset -5px -10px rgba(0,0,0,0.2);
+  }
+  .balloon:after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 30px;
+    background: inherit;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+  #winner {
+    margin-top: 30px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #d147a3;
+  }
+</style>
+</head>
+<body>
+
+<h1>婚禮氣球搶破遊戲 🎈</h1>
+<p>倒數結束後，瘋狂點擊氣球！誰先戳破就獲勝 🎉</p>
+<div id="countdown">準備中...</div>
+
+<div>
+  <div id="p1" class="balloon" style="background:#FF6B6B"></div>
+  <div id="p2" class="balloon" style="background:#FFD93D"></div>
+  <div id="p3" class="balloon" style="background:#6BCB77"></div>
+  <div id="p4" class="balloon" style="background:#4D96FF"></div>
+  <div id="p5" class="balloon" style="background:#FF9F1C"></div>
+</div>
+
+<div id="winner"></div>
+
+<script>
+  const countdownEl = document.getElementById("countdown");
+  const winnerEl = document.getElementById("winner");
+  const balloons = document.querySelectorAll(".balloon");
+
+  let gameStarted = false;
+  let winner = null;
+  let clicks = { p1:0, p2:0, p3:0, p4:0, p5:0 };
+  const maxClicks = 20; // 氣球要點擊 20 下才會破
+
+  // 禁用點擊直到開始
+  balloons.forEach(b => b.style.pointerEvents = "none");
+
+  // 倒數計時
+  let count = 3;
+  countdownEl.textContent = count;
+  const timer = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdownEl.textContent = count;
+    } else {
+      clearInterval(timer);
+      countdownEl.textContent = "開始！";
+      startGame();
+    }
+  }, 1000);
+
+  function startGame() {
+    gameStarted = true;
+    balloons.forEach(b => b.style.pointerEvents = "auto");
+
+    balloons.forEach(b => {
+      b.addEventListener("click", () => {
+        if (!gameStarted || winner) return;
+        clicks[b.id]++;
+
+        // 模擬氣球縮小
+        b.style.transform = `scale(${1 - clicks[b.id]/(maxClicks*1.2)})`;
+
+        if (clicks[b.id] >= maxClicks) {
+          winner = b.id.toUpperCase();
+          b.style.background = "transparent";
+          b.style.boxShadow = "none";
+          b.textContent = "💥";
+          winnerEl.textContent = `🎉 恭喜 ${winner} 戳破氣球，獲勝！`;
+          gameStarted = false;
+          balloons.forEach(x => x.style.pointerEvents = "none");
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
