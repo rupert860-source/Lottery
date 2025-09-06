@@ -10,6 +10,7 @@
     text-align: center;
     background: #fff0f5;
     padding: 20px;
+    overflow-x: hidden;
   }
   h1 {
     color: #d147a3;
@@ -30,6 +31,7 @@
     position: relative;
     cursor: pointer;
     box-shadow: inset -5px -10px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease;
   }
   .balloon:after {
     content: '';
@@ -48,6 +50,15 @@
     font-weight: bold;
     color: #d147a3;
   }
+  #confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
 </style>
 </head>
 <body>
@@ -65,11 +76,17 @@
 </div>
 
 <div id="winner"></div>
+<canvas id="confetti-canvas"></canvas>
 
 <script>
   const countdownEl = document.getElementById("countdown");
   const winnerEl = document.getElementById("winner");
   const balloons = document.querySelectorAll(".balloon");
+  const confettiCanvas = document.getElementById("confetti-canvas");
+  const ctx = confettiCanvas.getContext("2d");
+
+  // 音效
+  const popSound = new Audio("https://www.myinstants.com/media/sounds/balloon-pop.mp3");
 
   let gameStarted = false;
   let winner = null;
@@ -79,8 +96,8 @@
   // 禁用點擊直到開始
   balloons.forEach(b => b.style.pointerEvents = "none");
 
-  // 倒數計時
-  let count = 3;
+  // 倒數計時 (改為 10 秒)
+  let count = 10;
   countdownEl.textContent = count;
   const timer = setInterval(() => {
     count--;
@@ -111,10 +128,63 @@
           b.style.boxShadow = "none";
           b.textContent = "💥";
           winnerEl.textContent = `🎉 恭喜 ${winner} 戳破氣球，獲勝！`;
+          popSound.play();
+          launchConfetti();
           gameStarted = false;
           balloons.forEach(x => x.style.pointerEvents = "none");
         }
       });
+    });
+  }
+
+  // ======================
+  // 🎊 彩帶效果
+  // ======================
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  let confetti = [];
+
+  function launchConfetti() {
+    confetti = [];
+    for (let i = 0; i < 150; i++) {
+      confetti.push({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+        r: Math.random() * 6 + 4,
+        d: Math.random() * 20,
+        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+        tilt: Math.random() * 10 - 10,
+        tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+        tiltAngle: 0
+      });
+    }
+    animateConfetti();
+    setTimeout(() => { confetti = []; }, 5000);
+  }
+
+  function animateConfetti() {
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    confetti.forEach((c) => {
+      ctx.beginPath();
+      ctx.lineWidth = c.r / 2;
+      ctx.strokeStyle = c.color;
+      ctx.moveTo(c.x + c.tilt + c.r / 4, c.y);
+      ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r / 4);
+      ctx.stroke();
+    });
+    updateConfetti();
+    requestAnimationFrame(animateConfetti);
+  }
+
+  function updateConfetti() {
+    confetti.forEach((c) => {
+      c.tiltAngle += c.tiltAngleIncremental;
+      c.y += (Math.cos(c.d) + 3 + c.r/2)/2;
+      c.tilt = Math.sin(c.tiltAngle) * 15;
+      if (c.y > confettiCanvas.height) {
+        c.y = -10;
+        c.x = Math.random() * confettiCanvas.width;
+      }
     });
   }
 </script>
