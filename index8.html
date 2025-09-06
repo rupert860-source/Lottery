@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚禮 5 人氣球搶破遊戲</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    background: #fff0f5;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+  h1 { color: #d147a3; font-size: 32px; margin-bottom: 10px; }
+  #countdown { font-size: 40px; color: #d147a3; margin: 20px 0; }
+  .balloon {
+    width: 120px; height: 160px; border-radius: 60% 60% 60% 60%;
+    margin: 15px; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: bold; color: white; position: relative;
+    cursor: pointer; box-shadow: inset -5px -10px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease;
+  }
+  .balloon:after {
+    content: ''; position: absolute; bottom: -20px; left: 50%;
+    transform: translateX(-50%); width: 20px; height: 30px;
+    background: inherit; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+  #winner { margin-top: 30px; font-size: 28px; font-weight: bold; color: #d147a3; }
+  #scoreboard { margin-top: 40px; font-size: 20px; font-weight: bold; }
+  #scoreboard table { margin: 0 auto; border-collapse: collapse; }
+  #scoreboard th, #scoreboard td { border: 2px solid #d147a3; padding: 8px 15px; border-radius: 8px; }
+  #confetti-canvas { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+  button { font-size:18px; padding:10px 20px; margin:10px; border:none; border-radius:10px; background:#d147a3; color:white; cursor:pointer; }
+  .progress-bar { width: 120px; height: 10px; background: #eee; border-radius: 5px; margin:5px auto 15px auto; overflow:hidden; }
+  .progress-fill { height: 100%; width: 0%; background: #d147a3; transition: width 0.1s; }
+  .balloon-container { display:inline-block; text-align:center; }
+</style>
+</head>
+<body>
+
+<h1>婚禮氣球搶破遊戲 🎈</h1>
+<p>主持人按「開始遊戲」，倒數結束後大家瘋狂點擊氣球！</p>
+
+<button id="startBtn">開始遊戲</button>
+<button id="musicBtn">🎵 音樂開</button>
+<div id="countdown">等待開始...</div>
+
+<div>
+  <div class="balloon-container">
+    <div id="p1" class="balloon" style="background:#FF6B6B">好友A</div>
+    <div id="progress-p1" class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div class="balloon-container">
+    <div id="p2" class="balloon" style="background:#FFD93D">好友B</div>
+    <div id="progress-p2" class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div class="balloon-container">
+    <div id="p3" class="balloon" style="background:#6BCB77">好友C</div>
+    <div id="progress-p3" class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div class="balloon-container">
+    <div id="p4" class="balloon" style="background:#4D96FF">好友D</div>
+    <div id="progress-p4" class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div class="balloon-container">
+    <div id="p5" class="balloon" style="background:#FF9F1C">好友E</div>
+    <div id="progress-p5" class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+</div>
+
+<div id="winner"></div>
+
+<div id="scoreboard">
+  <h2>計分板</h2>
+  <table>
+    <tr><th>玩家</th><th>點擊次數</th></tr>
+    <tr><td>好友A</td><td id="score-p1">0</td></tr>
+    <tr><td>好友B</td><td id="score-p2">0</td></tr>
+    <tr><td>好友C</td><td id="score-p3">0</td></tr>
+    <tr><td>好友D</td><td id="score-p4">0</td></tr>
+    <tr><td>好友E</td><td id="score-p5">0</td></tr>
+  </table>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<audio id="bg-music" loop>
+  <source src="https://www.bensound.com/bensound-music/bensound-buddy.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const startBtn = document.getElementById("startBtn");
+const musicBtn = document.getElementById("musicBtn");
+const countdownEl = document.getElementById("countdown");
+const winnerEl = document.getElementById("winner");
+const balloons = document.querySelectorAll(".balloon");
+const confettiCanvas = document.getElementById("confetti-canvas");
+const ctx = confettiCanvas.getContext("2d");
+
+const bgMusic = document.getElementById("bg-music");
+const popSound = new Audio("https://www.myinstants.com/media/sounds/balloon-pop.mp3");
+
+let gameStarted = false;
+let winner = null;
+let clicks = { p1:0, p2:0, p3:0, p4:0, p5:0 };
+const maxClicks = 100; // 氣球要點擊 100 下才會破
+
+balloons.forEach(b => b.style.pointerEvents = "none");
+
+startBtn.addEventListener("click", () => {
+  resetGame();
+  startCountdown();
+  bgMusic.play();
+});
+
+musicBtn.addEventListener("click", () => {
+  if (bgMusic.paused) { bgMusic.play(); musicBtn.textContent = "🎵 音樂關"; }
+  else { bgMusic.pause(); musicBtn.textContent = "🎵 音樂開"; }
+});
+
+function startCountdown() {
+  let count = 10;
+  countdownEl.textContent = count;
+  const timer = setInterval(() => {
+    count--;
+    if(count>0) countdownEl.textContent = count;
+    else { clearInterval(timer); countdownEl.textContent = "開始！"; startGame(); }
+  },1000);
+}
+
+function startGame() {
+  gameStarted = true;
+  balloons.forEach(b => b.style.pointerEvents = "auto");
+  balloons.forEach(b => {
+    b.onclick = () => {
+      if (!gameStarted || winner) return;
+      clicks[b.id]++;
+      updateScoreboard();
+      updateProgress();
+      b.style.transform = `scale(${1 - clicks[b.id]/(maxClicks*1.2)})`;
+      if (clicks[b.id] >= maxClicks) {
+        winner = b.textContent;
+        b.style.background="transparent";
+        b.style.boxShadow="none";
+        b.textContent="💥";
+        winnerEl.textContent = `🎉 恭喜 ${winner} 戳破氣球，獲勝！`;
+        popSound.play();
+        launchConfetti();
+        gameStarted=false;
+        balloons.forEach(x => x.style.pointerEvents="none");
+      }
+    };
+  });
+}
+
+function resetGame() {
+  winner = null; gameStarted=false; winnerEl.textContent="";
+  for(let key in clicks) clicks[key]=0;
+  updateScoreboard();
+  updateProgress();
+  balloons.forEach(b=>{
+    const color = b.getAttribute("style").match(/background:[^;]+/)[0].split(":")[1];
+    b.style.background=color;
+    b.style.boxShadow="inset -5px -10px rgba(0,0,0,0.2)";
+    b.style.transform="scale(1)";
+    if(b.id==="p1") b.textContent="好友A";
+    if(b.id==="p2") b.textContent="好友B";
+    if(b.id==="p3") b.textContent="好友C";
+    if(b.id==="p4") b.textContent="好友D";
+    if(b.id==="p5") b.textContent="好友E";
+    b.style.pointerEvents="none";
+  });
+}
+
+function updateScoreboard() {
+  for(let key in clicks) document.getElementById("score-"+key).textContent = clicks[key];
+}
+
+function updateProgress() {
+  balloons.forEach(b=>{
+    const fillEl = document.getElementById("progress-"+b.id).querySelector('.progress-fill');
+    const percent = Math.min((clicks[b.id]/maxClicks)*100,100);
+    fillEl.style.width = percent+"%";
+  });
+}
+
+// 🎊 彩帶
+confettiCanvas.width=window.innerWidth; confettiCanvas.height=window.innerHeight;
+let confetti=[];
+function launchConfetti(){
+  confetti=[];
+  for(let i=0;i<150;i++){
+    confetti.push({
+      x:Math.random()*confettiCanvas.width,
+      y:Math.random()*confettiCanvas.height-confettiCanvas.height,
+      r:Math.random()*6+4,
+      d:Math.random()*20,
+      color:`hsl(${Math.random()*360},100%,50%)`,
+      tilt:Math.random()*10-10,
+      tiltAngleIncremental:Math.random()*0.07+0.05,
+      tiltAngle:0
+    });
+  }
+  animateConfetti();
+  setTimeout(()=>{confetti=[];},5000);
+}
+function animateConfetti(){
+  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confetti.forEach(c=>{
+    ctx.beginPath();
+    ctx.lineWidth=c.r/2;
+    ctx.strokeStyle=c.color;
+    ctx.moveTo(c.x+c.tilt+c.r/4,c.y);
+    ctx.lineTo(c.x+c.tilt,c.y+c.tilt+c.r/4);
+    ctx.stroke();
+  });
+  updateConfetti();
+  requestAnimationFrame(animateConfetti);
+}
+function updateConfetti(){
+  confetti.forEach(c=>{
+    c.tiltAngle+=c.tiltAngleIncremental;
+    c.y+=(Math.cos(c.d)+3+c.r/2)/2;
+    c.tilt=Math.sin(c.tiltAngle)*15;
+    if(c.y>confettiCanvas.height){ c.y=-10; c.x=Math.random()*confettiCanvas.width; }
+  });
+}
+</script>
+
+</body>
+</html>
