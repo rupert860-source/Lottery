@@ -1,7 +1,4 @@
-<!-- 🎵 背景音樂 -->
-<audio id="bg-music" loop>
-  <source src="https://www.bensound.com/bensound-music/bensound-buddy.mp3" type="audio/mpeg">
-</audio><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -81,10 +78,10 @@
     pointer-events: none;
     z-index: 9999;
   }
-  #startBtn {
-    font-size: 20px;
+  button {
+    font-size: 18px;
     padding: 10px 20px;
-    margin: 20px;
+    margin: 10px;
     border: none;
     border-radius: 10px;
     background: #d147a3;
@@ -99,6 +96,7 @@
 <p>主持人按「開始遊戲」，倒數結束後大家瘋狂點擊氣球！</p>
 
 <button id="startBtn">開始遊戲</button>
+<button id="musicBtn">🎵 音樂開</button>
 <div id="countdown">等待開始...</div>
 
 <div>
@@ -129,15 +127,21 @@
 
 <canvas id="confetti-canvas"></canvas>
 
+<!-- 🎵 背景音樂 -->
+<audio id="bg-music" loop>
+  <source src="https://www.bensound.com/bensound-music/bensound-buddy.mp3" type="audio/mpeg">
+</audio>
+
 <script>
   const startBtn = document.getElementById("startBtn");
+  const musicBtn = document.getElementById("musicBtn");
   const countdownEl = document.getElementById("countdown");
   const winnerEl = document.getElementById("winner");
   const balloons = document.querySelectorAll(".balloon");
   const confettiCanvas = document.getElementById("confetti-canvas");
   const ctx = confettiCanvas.getContext("2d");
 
-  // 音效
+  const bgMusic = document.getElementById("bg-music");
   const popSound = new Audio("https://www.myinstants.com/media/sounds/balloon-pop.mp3");
 
   let gameStarted = false;
@@ -145,16 +149,27 @@
   let clicks = { p1:0, p2:0, p3:0, p4:0, p5:0 };
   const maxClicks = 20; // 氣球要點擊 20 下才會破
 
-  // 一開始禁用點擊
   balloons.forEach(b => b.style.pointerEvents = "none");
 
   startBtn.addEventListener("click", () => {
     resetGame();
     startCountdown();
+    bgMusic.play();
+  });
+
+  // 🎵 音樂控制
+  musicBtn.addEventListener("click", () => {
+    if (bgMusic.paused) {
+      bgMusic.play();
+      musicBtn.textContent = "🎵 音樂關";
+    } else {
+      bgMusic.pause();
+      musicBtn.textContent = "🎵 音樂開";
+    }
   });
 
   function startCountdown() {
-    let count = 10; // 倒數 10 秒
+    let count = 10;
     countdownEl.textContent = count;
     const timer = setInterval(() => {
       count--;
@@ -223,9 +238,7 @@
     document.getElementById("score-p5").textContent = clicks.p5;
   }
 
-  // ======================
   // 🎊 彩帶效果
-  // ======================
   confettiCanvas.width = window.innerWidth;
   confettiCanvas.height = window.innerHeight;
   let confetti = [];
@@ -275,7 +288,5 @@
   }
 </script>
 
-</body<audio id="bg-music" loop>
-  <source src="https://www.bensound.com/bensound-music/bensound-buddy.mp3" type="audio/mpeg">
-</audio>>
+</body>
 </html>
