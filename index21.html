@@ -1,0 +1,113 @@
+mkdir wedding-balloon-game
+cd wedding-balloon-game
+npm init -y
+npm install express socket.io
+const express = require('express');
+const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+app.use(express.static('public'));
+
+let scores = {};
+
+io.on('connection', (socket) => {
+  console.log('User connected: ' + socket.id);
+  socket.emit('updateScores', scores);
+
+  socket.on('popBalloon', (playerName) => {
+    if (!scores[playerName]) scores[playerName] = 0;
+    scores[playerName] += 1;
+    io.emit('updateScores', scores);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected: ' + socket.id);
+  });
+});
+
+http.listen(3000, () => {
+  console.log('Server running at http://localhost:3000');
+});
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>婚禮氣球搶破遊戲</title>
+  <style>
+    body { font-family: Arial; text-align:center; background:#fce4ec; }
+    #gameArea { position: relative; width: 100%; height: 70vh; overflow: hidden; }
+    .balloon {
+      position: absolute;
+      width: 60px;
+      height: 80px;
+      background: red;
+      border-radius: 50% 50% 50% 50%;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    #scoreBoard { list-style:none; padding:0; }
+  </style>
+</head>
+<body>
+  <h1>婚禮氣球搶破遊戲</h1>
+  <input type="text" id="playerName" placeholder="輸入名字">
+  <div id="gameArea"></div>
+  <h2>分數榜</h2>
+  <ul id="scoreBoard"></ul>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const gameArea = document.getElementById('gameArea');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const playerNameInput = document.getElementById('playerName');
+
+    let balloonId = 0;
+
+    function createBalloon() {
+      const balloon = document.createElement('div');
+      balloon.classList.add('balloon');
+      balloon.style.left = Math.random() * (window.innerWidth - 60) + 'px';
+      balloon.style.top = gameArea.offsetHeight + 'px';
+      balloon.dataset.id = balloonId++;
+
+      balloon.addEventListener('click', () => {
+        const name = playerNameInput.value || '匿名';
+        socket.emit('popBalloon', name);
+        balloon.remove();
+      });
+
+      gameArea.appendChild(balloon);
+      moveBalloon(balloon);
+    }
+
+    function moveBalloon(balloon) {
+      let pos = gameArea.offsetHeight;
+      const speed = 2 + Math.random() * 3;
+
+      function frame() {
+        if (!balloon.parentElement) return;
+        pos -= speed;
+        balloon.style.top = pos + 'px';
+        if (pos + 80 < 0) balloon.remove();
+        else requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
+    setInterval(createBalloon, 1000); // 每秒產生一顆氣球
+
+    socket.on('updateScores', (scores) => {
+      scoreBoard.innerHTML = '';
+      for (let player in scores) {
+        const li = document.createElement('li');
+        li.textContent = `${player}: ${scores[player]}`;
+        scoreBoard.appendChild(li);
+      }
+    });
+  </script>
+</body>
+</html>
+node server.js
