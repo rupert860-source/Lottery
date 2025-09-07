@@ -1,87 +1,110 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>酷炫轉盤抽獎</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚禮 5 人氣球搶破遊戲</title>
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f8ff; }
-  #nameInput { padding: 10px; font-size: 16px; }
-  #spinButton { padding: 10px 20px; font-size: 16px; margin-left: 10px; cursor: pointer; }
-  #wheelContainer { margin: 50px auto; width: 400px; height: 400px; position: relative; }
-  #wheel { width: 100%; height: 100%; border-radius: 50%; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.2); transition: transform 5s cubic-bezier(0.33, 1, 0.68, 1); }
-  .slice { position: absolute; width: 50%; height: 50%; top: 50%; left: 50%; transform-origin: 0% 0%; border: 2px solid #fff; font-weight: bold; display: flex; justify-content: flex-end; align-items: center; padding-right: 10px; box-sizing: border-box; color: #fff; font-size: 16px; }
-  #center { position: absolute; width: 80px; height: 80px; top: 50%; left: 50%; margin-left: -40px; margin-top: -40px; background: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-  #pointer { width: 0; height:<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<title>彩色轉盤抽獎</title>
-<style>
-  body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f7f7f7; }
-  #nameInput { padding: 10px; font-size: 16px; }
-  #spinButton { padding: 10px 20px; font-size: 16px; margin-left: 10px; cursor: pointer; }
-  #wheelContainer { margin: 50px auto; width: 400px; height: 400px; position: relative; }
-  #wheel { width: 100%; height: 100%; border-radius: 50%; position: relative; transition: transform 5s cubic-bezier(0.33, 1, 0.68, 1); box-shadow: 0 0 20px rgba(0,0,0,0.2); }
-  .slice { position: absolute; width: 50%; height: 50%; top: 50%; left: 50%; transform-origin: 0% 0%; border: 2px solid #fff; font-weight: bold; display: flex; justify-content: flex-end; align-items: center; padding-right: 10px; box-sizing: border-box; color: #fff; font-size: 16px; }
-  #center { position: absolute; width: 80px; height: 80px; top: 50%; left: 50%; margin-left: -40px; margin-top: -40px; background: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-  #pointer { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid red; margin: -40px auto 0; }
-  #result { font-size: 24px; font-weight: bold; margin-top: 20px; color: green; }
+  body { font-family: Arial,sans-serif; text-align:center; background:#fff0f5; padding:20px; }
+  h1 { color:#d147a3; font-size:32px; margin-bottom:10px; }
+  .balloon { width:120px; height:160px; border-radius:60%; margin:15px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; color:white; position:relative; cursor:pointer; box-shadow: inset -5px -10px rgba(0,0,0,0.2); transition: transform 0.1s ease; }
+  .balloon:after { content:''; position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); width:20px; height:30px; background:inherit; clip-path: polygon(50% 0%,0% 100%,100% 100%); }
+  .balloon-container { display:inline-block; text-align:center; }
+  .progress-bar { width:120px; height:10px; background:#eee; border-radius:5px; margin:5px auto 15px auto; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#d147a3; transition:width 0.1s; }
+  #winner { margin-top:30px; font-size:28px; font-weight:bold; color:#d147a3; }
+  #scoreboard { margin-top:40px; font-size:20px; font-weight:bold; }
+  #scoreboard table { margin:0 auto; border-collapse:collapse; }
+  #scoreboard th, #scoreboard td { border:2px solid #d147a3; padding:8px 15px; border-radius:8px; }
+  #confetti-canvas { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
 </style>
 </head>
 <body>
 
-<h1>🎯 彩色轉盤抽獎 🎯</h1>
-<input type="text" id="nameInput" placeholder="輸入你的姓名" />
-<button id="spinButton">開始抽獎</button>
+<h1>婚禮 5 人氣球搶破遊戲</h1>
 
-<div id="wheelContainer">
-  <div id="wheel"></div>
-  <div id="center">抽獎</div>
-  <div id="pointer"></div>
+<div id="game-area">
+  <div class="balloon-container" id="balloon1"></div>
+  <div class="balloon-container" id="balloon2"></div>
+  <div class="balloon-container" id="balloon3"></div>
+  <div class="balloon-container" id="balloon4"></div>
+  <div class="balloon-container" id="balloon5"></div>
 </div>
 
-<div id="result"></div>
+<div id="winner"></div>
+<div id="scoreboard"></div>
 
+<canvas id="confetti-canvas"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <script>
-  const prizes = ["大獎", "二獎", "三獎", "四獎", "五獎", "安慰獎"];
-  const wheel = document.getElementById('wheel');
-  const resultDiv = document.getElementById('result');
-  const colors = ["#e74c3c","#3498db","#f1c40f","#2ecc71","#9b59b6","#e67e22"];
-  let participants = {};
+const balloonColors = ['#FF6B6B','#FF9F1C','#FFD93D','#6BCB77','#4D96FF'];
+const players = ['玩家1','玩家2','玩家3','玩家4','玩家5'];
+let scores = [0,0,0,0,0];
+let winnerDeclared = false;
 
-  // 建立彩色轉盤
-  prizes.forEach((prize, i) => {
-    const slice = document.createElement('div');
-    slice.className = 'slice';
-    const angle = 360 / prizes.length;
-    slice.style.transform = `rotate(${i * angle}deg) skewY(-${90 - angle}deg)`;
-    slice.style.background = colors[i % colors.length];
-    slice.innerText = prize;
-    wheel.appendChild(slice);
-  });
+for(let i=0;i<5;i++){
+  const container = document.getElementById('balloon'+(i+1));
+  const balloon = document.createElement('div');
+  balloon.className = 'balloon';
+  balloon.style.background = balloonColors[i];
+  balloon.innerText = players[i];
+  container.appendChild(balloon);
 
-  document.getElementById('spinButton').addEventListener('click', () => {
-    const name = document.getElementById('nameInput').value.trim();
-    if (!name) {
-      alert("請輸入姓名！");
-      return;
+  const progressBar = document.createElement('div');
+  progressBar.className = 'progress-bar';
+  const progressFill = document.createElement('div');
+  progressFill.className = 'progress-fill';
+  progressBar.appendChild(progressFill);
+  container.appendChild(progressBar);
+
+  balloon.addEventListener('click', ()=>{
+    if(winnerDeclared) return;
+    scores[i]++;
+    progressFill.style.width = Math.min(scores[i]*10,100)+'%';
+    balloon.style.transform = 'scale(1.1)';
+    setTimeout(()=>{ balloon.style.transform='scale(1)'; },100);
+
+    if(scores[i]>=10){
+      winnerDeclared = true;
+      document.getElementById('winner').innerText = '🏆 勝利者：'+players[i]+'!';
+      showConfetti();
+      updateScoreboard();
     }
-    if (participants[name]) {
-      alert(`${name} 已經抽過獎了！`);
-      return;
-    }
-
-    const prizeIndex = Math.floor(Math.random() * prizes.length);
-    const spinDegrees = 360 * 6 + (prizeIndex * (360 / prizes.length)) + (360 / prizes.length / 2);
-    wheel.style.transition = "transform 5s cubic-bezier(0.33, 1, 0.68, 1)";
-    wheel.style.transform = `rotate(${spinDegrees}deg)`;
-
-    setTimeout(() => {
-      const prize = prizes[prizeIndex];
-      resultDiv.innerText = `${name} 抽中了 ${prize} 🎉`;
-      participants[name] = prize;
-    }, 5000);
   });
+}
+
+function updateScoreboard(){
+  let html = '<table><tr><th>玩家</th><th>分數</th></tr>';
+  for(let i=0;i<5;i++){
+    html += '<tr><td>'+players[i]+'</td><td>'+scores[i]+'</td></tr>';
+  }
+  html += '</table>';
+  document.getElementById('scoreboard').innerHTML = html;
+}
+
+function showConfetti(){
+  const duration = 3000;
+  const animationEnd = Date.now() + duration;
+  const canvas = document.getElementById('confetti-canvas');
+  const myConfetti = confetti.create(canvas, { resize: true, useWorker: true });
+
+  (function frame(){
+    myConfetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 }
+    });
+    myConfetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 }
+    });
+    if(Date.now() < animationEnd){ requestAnimationFrame(frame); }
+  })();
+}
 </script>
 
 </body>
