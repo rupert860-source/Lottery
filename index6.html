@@ -7,7 +7,7 @@
   <style>
     body { text-align: center; font-family: sans-serif; }
     .track { display: flex; flex-direction: column; margin: 20px; }
-    .runner { height: 30px; background: pink; margin: 5px 0; text-align: left; }
+    .runner { height: 30px; background: pink; margin: 5px 0; text-align: left; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -17,12 +17,12 @@
   <button id="clickBtn" disabled>點我跑！</button>
   <div class="track" id="track"></div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-    // ✅ 這裡換成你的 firebaseConfig
-    const firebaseConfig = {
+    // ✅ 換成你的 Firebase Config
+    var firebaseConfig = {
       apiKey: "YOUR_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
       databaseURL: "https://YOUR_PROJECT.firebaseio.com",
@@ -31,9 +31,8 @@
       messagingSenderId: "XXXX",
       appId: "XXXX"
     };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
 
     let playerName = "";
     const track = document.getElementById("track");
@@ -49,7 +48,7 @@
       db.ref("players/" + playerName + "/steps").transaction(s => (s||0)+1);
     };
 
-    // 即時顯示所有玩家進度
+    // 即時監聽玩家狀態
     db.ref("players").on("value", snapshot => {
       track.innerHTML = "";
       const players = snapshot.val();
