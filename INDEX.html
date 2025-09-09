@@ -5,31 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>婚禮跑步遊戲</title>
   <style>
-    body { text-align: center; font-family: sans-serif; }
+    body { text-align: center; font-family: sans-serif; background: #fff0f5; }
+    h1 { color: #d63384; }
     .track { display: flex; flex-direction: column; margin: 20px; }
-    .runner { height: 30px; background: pink; margin: 5px 0; text-align: left; white-space: nowrap; }
+    .runner { height: 30px; background: pink; margin: 5px 0; text-align: left; white-space: nowrap; border-radius: 10px; }
+    #clickBtn { margin-top: 20px; padding: 10px 20px; font-size: 18px; }
   </style>
 </head>
 <body>
   <h1>🏃 婚禮點擊跑步比賽 🎉</h1>
   <input id="playerName" placeholder="輸入名字">
   <button id="joinBtn">加入遊戲</button>
+  <br>
   <button id="clickBtn" disabled>點我跑！</button>
   <div class="track" id="track"></div>
 
-  <!-- Firebase v8 -->
+  <!-- Firebase CDN -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <script>
-    // const firebaseConfig = { ... }
+    // 🔑 這是你的 Wedding 專案設定
     var firebaseConfig = {
-      apiKey: "YOUR_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "XXXX",
-      appId: "XXXX"
+      apiKey: "AIzaSyAQzK5BX7q7uetIKxKyf86Xxxxxxxx",
+      authDomain: "index-63c1d.firebaseapp.com",
+      databaseURL: "https://index-63c1d-default-rtdb.firebaseio.com",
+      projectId: "index-63c1d",
+      storageBucket: "index-63c1d.appspot.com",
+      messagingSenderId: "259240910482",
+      appId: "1:259240910482:web:4e2d9a57fca6367848904b",
+      measurementId: "G-YF4Y2S57DV"
     };
     firebase.initializeApp(firebaseConfig);
     var db = firebase.database();
@@ -37,6 +42,7 @@
     let playerName = "";
     const track = document.getElementById("track");
 
+    // 加入遊戲
     document.getElementById("joinBtn").onclick = () => {
       playerName = document.getElementById("playerName").value;
       if (!playerName) return alert("請輸入名字");
@@ -44,11 +50,12 @@
       document.getElementById("clickBtn").disabled = false;
     };
 
+    // 點擊前進
     document.getElementById("clickBtn").onclick = () => {
       db.ref("players/" + playerName + "/steps").transaction(s => (s||0)+1);
     };
 
-    // 即時監聽玩家狀態
+    // 即時顯示所有玩家進度
     db.ref("players").on("value", snapshot => {
       track.innerHTML = "";
       const players = snapshot.val();
